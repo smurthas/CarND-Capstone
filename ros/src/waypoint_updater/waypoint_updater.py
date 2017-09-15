@@ -33,6 +33,7 @@ class WaypointUpdater(object):
 
         # TODO: Add a subscriber for /traffic_waypoint and /obstacle_waypoint below
 
+        self.pose = None
 
         self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
 
@@ -41,10 +42,29 @@ class WaypointUpdater(object):
         rospy.spin()
 
     def pose_cb(self, msg):
+        self.pose = msg.pose
+        #rospy.loginfo("x: %s, y: %s", msg.pose.position.x, msg.pose.position.y)
         # TODO: Implement
         pass
 
     def waypoints_cb(self, waypoints):
+        #rospy.loginfo("wps: %s", waypoints)
+        closest_i = self.closest_waypoint(waypoints.waypoints)
+        if closest_i is None:
+            return
+        lane = Lane()
+        i = closest_i
+        while len(lane.waypoints) < LOOKAHEAD_WPS:
+            wp = waypoints.waypoints[i % len(waypoints.waypoints)]
+            wp.twist.twist.linear.x = 1
+            lane.waypoints.append(wp)
+            i += 1
+        self.final_waypoints_pub.publish(lane)
+
+        c_wp = waypoints.waypoints[closest_i]
+        rospy.loginfo("closest: i: %s, x: %s, y: %s", closest_i,
+                c_wp.pose.pose.position.x, c_wp.pose.pose.position.y)
+
         # TODO: Implement
         pass
 
@@ -69,6 +89,24 @@ class WaypointUpdater(object):
             dist += dl(waypoints[wp1].pose.pose.position, waypoints[i].pose.pose.position)
             wp1 = i
         return dist
+
+    def closest_waypoint(self, waypoints):
+        if self.pose is None:
+            return None
+        closest = -1
+        closest_dist = 10000000
+        dl = lambda a, b: math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2  + (a.z-b.z)**2)
+        for i in range(0, len(waypoints)):
+            d = dl(self.pose.position, waypoints[i].pose.pose.position)
+            if d < closest_dist:
+                closest = i
+                closest_dist = d
+
+        if closest == -1:
+            return None
+
+        return closest
+
 
 
 if __name__ == '__main__':
