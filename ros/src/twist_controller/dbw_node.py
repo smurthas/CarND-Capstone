@@ -59,39 +59,50 @@ class DBWNode(object):
     min_speed = 0.2
 
     # TODO: Create `Controller` object
-    self.controller = Controller(wheel_base, steer_ratio, min_speed, max_lat_accel, max_steer_angle)
+    self.controller = Controller(wheel_base, steer_ratio, min_speed,
+            max_lat_accel, max_steer_angle, vehicle_mass, wheel_radius)
     self.pose = None
     self.twist = None
+    self.twist_cmd = None
+    self.dbw_enabled = False
 
-    # TODO: Subscribe to all the topics you need to
     rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb)
     rospy.Subscriber('/current_velocity', TwistStamped, self.vel_cb)
+    rospy.Subscriber('/twist_cmd', TwistStamped, self.twist_cb)
+    rospy.Subscriber('/vehicle/dbw_enabled', Bool, self.dbw_status_cb)
 
-    self.linear_velocity = 1
-    self.angular_velocity = 1
     self.loop()
 
   def vel_cb(self, msg):
     self.twist = msg.twist
 
+  def twist_cb(self, msg):
+    self.twist_cmd = msg.twist
+
   def pose_cb(self, msg):
     self.pose = msg.pose
+
+  def dbw_status_cb(self, msg):
+    self.dbw_enabled = msg.data
+    rospy.loginfo('dbw_status changed: %s', msg)
 
   def loop(self):
     rate = rospy.Rate(50) # 50Hz
     while not rospy.is_shutdown():
-      # TODO: Get predicted throttle, brake, and steering using `twist_controller`
-      # You should only publish the control commands if dbw is enabled
+      if self.dbw_enabled:
+        cur_v = 0
+        goal_lin_vel = self.twist_cmd.linear.x if self.twist_cmd is not None else 1
+        goal_ang_vel = self.twist_cmd.angular.z if self.twist_cmd is not None else 0
 
-      cur_v = 0
-      if self.twist is not None:
-        cur_v = self.twist.linear.x
-      throttle, brake, steer = self.controller.control(5, 0, cur_v, 0)
+        if self.twist is not None:
+            cur_v = self.twist.linear.x
 
-      rospy.loginfo("cv: %s, t: %s, b: %s, s: %s", cur_v, throttle, brake, steer)
+        throttle, brake, steer = self.controller.control(goal_lin_vel, goal_ang_vel, cur_v, 0)
 
-      if True:
+        rospy.loginfo("gv: {0:.2f}, cv: {1:.2f}, t: {2:.2f}, b: {3:.2f}, s: {4:.2f}".format(goal_lin_vel, cur_v, throttle, brake, steer))
+
         self.publish(throttle, brake, steer)
+
       rate.sleep()
 
   def publish(self, throttle, brake, steer):
