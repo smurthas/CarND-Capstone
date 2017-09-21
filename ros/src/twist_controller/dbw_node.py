@@ -87,9 +87,13 @@ class DBWNode(object):
     rospy.loginfo('dbw_status changed: %s', msg)
 
   def loop(self):
-    rate = rospy.Rate(50) # 50Hz
+    rate = rospy.Rate(10) # 50Hz
+    last_time = rospy.Time.now()
     while not rospy.is_shutdown():
       if self.dbw_enabled:
+        time = rospy.Time.now()
+        dt = time - last_time
+        last_time = time
         cur_v = 0
         goal_lin_vel = self.twist_cmd.linear.x if self.twist_cmd is not None else 1
         goal_ang_vel = self.twist_cmd.angular.z if self.twist_cmd is not None else 0
@@ -97,9 +101,11 @@ class DBWNode(object):
         if self.twist is not None:
             cur_v = self.twist.linear.x
 
-        throttle, brake, steer = self.controller.control(goal_lin_vel, goal_ang_vel, cur_v, 0)
+        throttle, brake, steer = self.controller.control(goal_lin_vel,
+                goal_ang_vel, cur_v, 0, dt.to_sec())
 
-        rospy.loginfo("gv: {0:.2f}, cv: {1:.2f}, t: {2:.2f}, b: {3:.2f}, s: {4:.2f}".format(goal_lin_vel, cur_v, throttle, brake, steer))
+        rospy.loginfo("gv: {0:.2f}, cv: {1:.2f}, t: {2:.2f}, b: {3:.2f}, s: {4:.2f}"
+                .format(goal_lin_vel, cur_v, throttle, brake, steer ))
 
         self.publish(throttle, brake, steer)
 
