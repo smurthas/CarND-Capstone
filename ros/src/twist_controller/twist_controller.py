@@ -18,6 +18,10 @@ class Controller(object):
     self.accel_pid_controller = PID(0.11, 0.0, -0.01, -1, 1)
     self.accel_low_pass_filter = LowPassFilter(10, 1)
 
+    self.steer_factor = 2.0
+    full_throttle_velocity = 20
+    self.throttle_scale = full_throttle_velocity * full_throttle_velocity
+
     # initialize to zero for smooth initial accel from stop
     self.accel_low_pass_filter.filt(0)
 
@@ -29,14 +33,15 @@ class Controller(object):
     accel_raw = self.accel_pid_controller.step(prop_lin_vel - cur_lin_vel, time)
     accel = self.accel_low_pass_filter.filt(accel_raw)
     if accel > 0:
-      throttle = accel
+      throttle = min(0.999, accel +
+          (prop_lin_vel*prop_lin_vel/self.throttle_scale))
     else:
       brake = accel * -9.81 * self.vehicle_mass * self.wheel_radius
 
     return throttle, brake
 
   def control(self, prop_lin_vel, prop_ang_vel, cur_lin_vel, dbw_status, time):
-    steer = self.yaw_controller.get_steering(prop_lin_vel, prop_ang_vel, cur_lin_vel)
+    steer = self.steer_factor * self.yaw_controller.get_steering(prop_lin_vel, prop_ang_vel, cur_lin_vel)
     throttle, brake = self.get_accel(prop_lin_vel, cur_lin_vel, time)
 
     return throttle, brake, steer

@@ -58,7 +58,6 @@ class DBWNode(object):
                                      BrakeCmd, queue_size=1)
     min_speed = 0.2
 
-    # TODO: Create `Controller` object
     self.controller = Controller(wheel_base, steer_ratio, min_speed,
             max_lat_accel, max_steer_angle, vehicle_mass, wheel_radius)
     self.pose = None
@@ -87,7 +86,7 @@ class DBWNode(object):
     rospy.loginfo('dbw_status changed: %s', msg)
 
   def loop(self):
-    rate = rospy.Rate(10) # 50Hz
+    rate = rospy.Rate(50) # 50Hz
     last_time = rospy.Time.now()
     while not rospy.is_shutdown():
       if self.dbw_enabled:
@@ -104,8 +103,8 @@ class DBWNode(object):
         throttle, brake, steer = self.controller.control(goal_lin_vel,
                 goal_ang_vel, cur_v, 0, dt.to_sec())
 
-        rospy.loginfo("gv: {0:.2f}, cv: {1:.2f}, t: {2:.2f}, b: {3:.2f}, s: {4:.2f}"
-                .format(goal_lin_vel, cur_v, throttle, brake, steer ))
+        #rospy.loginfo("gv: {0:.2f}, cv: {1:.2f}, t: {2:.2f}, b: {3:.2f}, s: {4:.2f}"
+        #        .format(goal_lin_vel, cur_v, throttle, brake, steer ))
 
         self.publish(throttle, brake, steer)
 
