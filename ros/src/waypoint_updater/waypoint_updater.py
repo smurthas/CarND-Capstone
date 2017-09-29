@@ -24,7 +24,7 @@ TODO (for Yousuf and Aaron): Stopline location for each traffic light.
 '''
 
 LOOKAHEAD_WPS = 20 # Number of waypoints we will publish. You can change this number
-
+MAX_VELOCITY = 20
 
 class WaypointUpdater(object):
     def __init__(self):
@@ -38,10 +38,29 @@ class WaypointUpdater(object):
 
         self.pose = None
         self.waypoints = None
+        self.stopping_index = -1
 
         self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
 
         self.loop()
+
+    def update_waypoint_velocity(self, waypoints, waypoint, index):
+        current_vel = get_waypoint_velocity(waypoint)
+
+        if(self.stopping_index == -1):
+
+            if(current_vel < MAX_VELOCITY):
+                new_vel = current_vel + .15
+                set_waypoint_velocity(waypoints, waypoint, new_vel)
+        else:
+            waypoint_count_until_stop = index - self.stopping_index
+            delta_vel = current_vel / waypoint_count_until_stop
+            new_vel = current_vel - delta_vel
+            set_waypoint_velocity(waypoints, waypoint, new_vel)
+
+
+
+
 
     def loop(self):
         rate = rospy.Rate(50) # 50Hz
@@ -55,12 +74,15 @@ class WaypointUpdater(object):
 
             prev_i = next_i
 
+
+
             # build a lane object with the next LOOKAHEAD_WPS points, looping
             # around to the beginning of the list if needed
             lane = Lane()
             i = next_i
             while len(lane.waypoints) < LOOKAHEAD_WPS:
                 wp = self.waypoints[i % len(self.waypoints)]
+                update_wp_velocity(self.waypoints, wp, i)
                 lane.waypoints.append(wp)
                 i += 1
 
@@ -75,9 +97,10 @@ class WaypointUpdater(object):
     def waypoints_cb(self, waypoints):
         self.waypoints = waypoints.waypoints
 
-    def traffic_cb(self, msg):
+    def traffic_cb(self, index):
         # TODO: Callback for /traffic_waypoint message. Implement
-        rospy.loginfo('Traffic callback: %s',msg)
+        #rospy.loginfo('Traffic callback: %s',index)
+        self.stopping_index = index
         #print("Traffic callback: ", msg)
         pass
 
