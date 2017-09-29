@@ -24,8 +24,7 @@ TODO (for Yousuf and Aaron): Stopline location for each traffic light.
 '''
 
 LOOKAHEAD_WPS = 20 # Number of waypoints we will publish. You can change this number
-MAX_VELOCITY = 20
-DELTA_VEL = MAX_VELOCITY / 40
+
 
 class WaypointUpdater(object):
     def __init__(self):
@@ -48,19 +47,21 @@ class WaypointUpdater(object):
     def update_waypoint_velocity(self, waypoints, waypoint, index):
         current_vel = self.get_waypoint_velocity(waypoint)
 
-        target_vel = 20
+        target_vel = 8.9
         if(self.stopping_index != -1):
+            stop_index_buffer = int(self.stopping_index) - 3
             waypoint_count_until_stop = int(self.stopping_index) - index
-            target_vel =  .5 * waypoint_count_until_stop
+            if(waypoint_count_until_stop < 60):
+                target_vel =  .15 * waypoint_count_until_stop
 
 
 
 
 
         if(current_vel < target_vel):
-            new_vel = current_vel + .5
+            new_vel = current_vel + .15
         else:
-            new_vel = current_vel - .5
+            new_vel = current_vel - .15
 
         #rospy.loginfo('target_vel: %s, new_vel: %s', target_vel, new_vel)
         self.set_waypoint_velocity(waypoints, index, new_vel)
