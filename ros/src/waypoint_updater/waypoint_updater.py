@@ -64,7 +64,7 @@ class WaypointUpdater(object):
                 i += 1
 
             self.final_waypoints_pub.publish(lane)
-            rospy.loginfo('Waypoints Updated')
+            
 
             rate.sleep()
 
