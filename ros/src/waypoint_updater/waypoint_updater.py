@@ -62,7 +62,7 @@ class WaypointUpdater(object):
         else:
             new_vel = current_vel - .5
 
-        rospy.loginfo('target_vel: %s, new_vel: %s', target_vel, new_vel)
+        #rospy.loginfo('target_vel: %s, new_vel: %s', target_vel, new_vel)
         self.set_waypoint_velocity(waypoints, index, new_vel)
 
 
