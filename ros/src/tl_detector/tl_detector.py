@@ -63,9 +63,11 @@ class TLDetector(object):
         #only load waypoints once
         if self.waypoints is None:
             self.waypoints = waypoints
-            print('base waypoints loaded')
+            rospy.loginfo('base waypoints loaded')
+            #print('base waypoints loaded')
             self.get_stopline_waypoint()
-            print('stopline waypoints loaded')
+            rospy.loginfo('stopline waypoints loaded')
+            #print('stopline waypoints loaded')
             print(self.stopline_wps)
 
     def traffic_cb(self, msg):
@@ -101,8 +103,11 @@ class TLDetector(object):
         else:
             self.upcoming_red_light_pub.publish(Int32(self.last_wp))
 
-        print('upcoming red light: ',light_wp)
-        print('state: ', state)
+
+        rospy.loginfo('upcoming red light: %s',light_wp)
+        #print('upcoming red light: ',light_wp)
+        rospy.loginfo('state: %s',state)
+        #print('state: ', state)
         self.state_count += 1
 
 

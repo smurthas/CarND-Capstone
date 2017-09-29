@@ -75,7 +75,8 @@ class WaypointUpdater(object):
 
     def traffic_cb(self, msg):
         # TODO: Callback for /traffic_waypoint message. Implement
-        print("Traffic callback: ", msg)
+        rospy.loginfo('Traffic callback:: %s',msg)
+        #print("Traffic callback: ", msg)
         pass
 
     def obstacle_cb(self, msg):
