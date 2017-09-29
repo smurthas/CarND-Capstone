@@ -48,19 +48,19 @@ class WaypointUpdater(object):
     def update_waypoint_velocity(self, waypoints, waypoint, index):
         current_vel = self.get_waypoint_velocity(waypoint)
 
-        target_vel = MAX_VELOCITY
+        target_vel = 20
         if(self.stopping_index != -1):
             waypoint_count_until_stop = int(self.stopping_index) - index
-            target_vel =  DELTA_VEL * waypoint_count_until_stop
+            target_vel =  .5 * waypoint_count_until_stop
 
 
 
 
 
         if(current_vel < target_vel):
-            new_vel = current_vel + DELTA_VEL
+            new_vel = current_vel + .5
         else:
-            new_vel = current_vel - DELTA_VEL
+            new_vel = current_vel - .5
 
         rospy.loginfo('target_vel: %s, new_vel: %s', target_vel, new_vel)
         self.set_waypoint_velocity(waypoints, index, new_vel)
