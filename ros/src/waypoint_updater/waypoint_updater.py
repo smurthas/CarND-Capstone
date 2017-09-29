@@ -51,7 +51,7 @@ class WaypointUpdater(object):
             new_vel = current_vel + .15
         else:
             waypoint_count_until_stop = int(self.stopping_index) - index
-            rospy.loginfo('Wp Count: %s', waypoint_count_until_stop)
+            rospy.loginfo('Wp Count: %s, Vel: %s', waypoint_count_until_stop, current_vel)
             if(waypoint_count_until_stop > 0 and current_vel > 0):
                 delta_vel = current_vel / waypoint_count_until_stop
                 new_vel = current_vel - delta_vel
