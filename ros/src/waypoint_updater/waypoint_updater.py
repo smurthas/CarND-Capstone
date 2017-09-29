@@ -51,12 +51,12 @@ class WaypointUpdater(object):
 
             if(current_vel < MAX_VELOCITY):
                 new_vel = current_vel + .15
-                self.set_waypoint_velocity(waypoints, waypoint, new_vel)
+                self.set_waypoint_velocity(waypoints, i, new_vel)
         else:
             waypoint_count_until_stop = index - self.stopping_index
             delta_vel = current_vel / waypoint_count_until_stop
             new_vel = current_vel - delta_vel
-            self.set_waypoint_velocity(waypoints, waypoint, new_vel)
+            self.set_waypoint_velocity(waypoints, i, new_vel)
 
 
 
