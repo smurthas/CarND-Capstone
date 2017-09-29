@@ -98,7 +98,7 @@ class TLDetector(object):
             self.last_wp = light_wp
             self.upcoming_red_light_pub.publish(Int32(light_wp))
         else:
-            self.upcoming_red_light_pub.publish(Int32(self.last_wp
+            self.upcoming_red_light_pub.publish(Int32(self.last_wp))
 
         rospy.loginfo('upcoming red light: %s', light_wp)
         rospy.loginfo('state: %s', state)
