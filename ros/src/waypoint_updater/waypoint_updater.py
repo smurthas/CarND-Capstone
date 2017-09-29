@@ -45,18 +45,18 @@ class WaypointUpdater(object):
         self.loop()
 
     def update_waypoint_velocity(self, waypoints, waypoint, index):
-        current_vel = get_waypoint_velocity(waypoint)
+        current_vel = self.get_waypoint_velocity(waypoint)
 
         if(self.stopping_index == -1):
 
             if(current_vel < MAX_VELOCITY):
                 new_vel = current_vel + .15
-                set_waypoint_velocity(waypoints, waypoint, new_vel)
+                self.set_waypoint_velocity(waypoints, waypoint, new_vel)
         else:
             waypoint_count_until_stop = index - self.stopping_index
             delta_vel = current_vel / waypoint_count_until_stop
             new_vel = current_vel - delta_vel
-            set_waypoint_velocity(waypoints, waypoint, new_vel)
+            self.set_waypoint_velocity(waypoints, waypoint, new_vel)
 
 
 
