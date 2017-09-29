@@ -82,7 +82,7 @@ class WaypointUpdater(object):
             i = next_i
             while len(lane.waypoints) < LOOKAHEAD_WPS:
                 wp = self.waypoints[i % len(self.waypoints)]
-                update_wp_velocity(self.waypoints, wp, i)
+                update_waypoint_velocity(self.waypoints, wp, i)
                 lane.waypoints.append(wp)
                 i += 1
 
