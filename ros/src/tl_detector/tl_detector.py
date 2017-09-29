@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 import rospy
 from std_msgs.msg import Int32
 from geometry_msgs.msg import PoseStamped, Pose
@@ -11,6 +12,10 @@ import tf
 import cv2
 import yaml
 
+import math
+import numpy as np
+from tf.transformations import euler_from_quaternion
+
 STATE_COUNT_THRESHOLD = 3
 
 class TLDetector(object):
@@ -21,6 +26,7 @@ class TLDetector(object):
         self.waypoints = None
         self.camera_image = None
         self.lights = []
+        self.stopline_wps = []
 
         sub1 = rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb)
         sub2 = rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
@@ -55,7 +61,13 @@ class TLDetector(object):
         self.pose = msg
 
     def waypoints_cb(self, waypoints):
-        self.waypoints = waypoints
+        #only load waypoints once
+        if self.waypoints is None:
+            self.waypoints = waypoints
+            #rospy.loginfo('base waypoints loaded')
+            self.get_stopline_waypoint()
+            #rospy.loginfo('stopline waypoints loaded')
+
 
     def traffic_cb(self, msg):
         self.lights = msg.lights
@@ -63,11 +75,10 @@ class TLDetector(object):
     def image_cb(self, msg):
         """Identifies red lights in the incoming camera image and publishes the index
             of the waypoint closest to the red light's stop line to /traffic_waypoint
-
         Args:
             msg (Image): image from car-mounted camera
-
         """
+
         self.has_image = True
         self.camera_image = msg
         light_wp, state = self.process_traffic_lights()
@@ -88,32 +99,67 @@ class TLDetector(object):
             self.upcoming_red_light_pub.publish(Int32(light_wp))
         else:
             self.upcoming_red_light_pub.publish(Int32(self.last_wp))
+
+        #rospy.loginfo('upcoming red light: %s', light_wp)
+        #rospy.loginfo('state: %s', state)
         self.state_count += 1
+
+    def get_stopline_waypoint(self):
+        get_dist = lambda a, b: math.sqrt((a.x - b[0]) ** 2 + (a.y - b[1]) ** 2)
+        for stopline in range(len(self.config['stop_line_positions'])):
+            closest_dist = 100000
+            stopline_wp = -1
+            for wp in range(len(self.waypoints.waypoints)):
+                d = get_dist(self.waypoints.waypoints[wp].pose.pose.position,self.config['stop_line_positions'][stopline])
+                if closest_dist > d:
+                    closest_dist = d
+                    stopline_wp = wp
+            self.stopline_wps.append(stopline_wp)
 
     def get_closest_waypoint(self, pose):
         """Identifies the closest path waypoint to the given position
             https://en.wikipedia.org/wiki/Closest_pair_of_points_problem
         Args:
             pose (Pose): position to match a waypoint to
-
         Returns:
             int: index of the closest waypoint in self.waypoints
-
         """
         #TODO implement
-        return 0
+        closest_wp = -1
+        closest_dist = 10000000
+
+        get_dist = lambda a, b: math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2  + (a.z-b.z)**2)
+
+        if self.waypoints:
+            for wp in range(len(self.waypoints.waypoints)):
+                d = get_dist(pose.position, self.waypoints.waypoints[wp].pose.pose.position)
+                if d<closest_dist:
+                    closest_dist = d
+                    closest_wp = wp
+
+            x = self.waypoints.waypoints[closest_wp].pose.pose.position.x
+            y = self.waypoints.waypoints[closest_wp].pose.pose.position.y
+            heading = np.arctan2((y - pose.position.y), (x - pose.position.x))
+            euler = euler_from_quaternion([pose.orientation.x,
+                                           pose.orientation.y,
+                                           pose.orientation.z,
+                                           pose.orientation.w])
+            theta = euler[2]
+            angle = np.abs(theta-heading)
+
+            if angle > np.pi/4:
+                closest_wp +=1
+
+        return closest_wp
 
 
     def project_to_image_plane(self, point_in_world):
         """Project point from 3D world coordinates to 2D camera image location
-
         Args:
             point_in_world (Point): 3D location of a point in the world
-
         Returns:
             x (int): x coordinate of target point in image
             y (int): y coordinate of target point in image
-
         """
 
         fx = self.config['camera_info']['focal_length_x']
@@ -142,13 +188,10 @@ class TLDetector(object):
 
     def get_light_state(self, light):
         """Determines the current color of the traffic light
-
         Args:
             light (TrafficLight): light to classify
-
         Returns:
             int: ID of traffic light color (specified in styx_msgs/TrafficLight)
-
         """
         if(not self.has_image):
             self.prev_light_loc = None
@@ -156,7 +199,7 @@ class TLDetector(object):
 
         cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
 
-        x, y = self.project_to_image_plane(light.pose.pose.position)
+        #x, y = self.project_to_image_plane(light.pose.pose.position)
 
         #TODO use light location to zoom in on traffic light in image
 
@@ -166,11 +209,9 @@ class TLDetector(object):
     def process_traffic_lights(self):
         """Finds closest visible traffic light, if one exists, and determines its
             location and color
-
         Returns:
             int: index of waypoint closes to the upcoming stop line for a traffic light (-1 if none exists)
             int: ID of traffic light color (specified in styx_msgs/TrafficLight)
-
         """
         light = None
 
@@ -181,11 +222,25 @@ class TLDetector(object):
 
         #TODO find the closest visible traffic light (if one exists)
 
-        if light:
-            state = self.get_light_state(light)
-            return light_wp, state
-        self.waypoints = None
-        return -1, TrafficLight.UNKNOWN
+        closest_dist = 100000
+        closest_stopline = -1
+        closest_stopline_wp = -1
+        state = 4
+        if(self.stopline_wps):
+            for i in range(len(self.stopline_wps)):
+                d = self.stopline_wps[i] - car_position
+                #only consider lights that's ahead of the car
+                if (d > 0) & (closest_dist > d):
+                    closest_dist = d
+                    closest_stopline = i
+
+            closest_stopline_wp = self.stopline_wps[closest_stopline]
+
+            #only run traffic light classifier when the upcoming light is within 100m range
+            if closest_dist < 100:
+                state = self.get_light_state(self.lights[closest_stopline])
+
+        return closest_stopline_wp, state
 
 if __name__ == '__main__':
     try:

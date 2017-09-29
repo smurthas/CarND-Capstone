@@ -3,6 +3,7 @@
 import rospy
 from geometry_msgs.msg import PoseStamped
 from styx_msgs.msg import Lane, Waypoint
+from std_msgs.msg import Int32
 import tf
 
 import math
@@ -33,6 +34,7 @@ class WaypointUpdater(object):
         rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
 
         # TODO: Add a subscriber for /traffic_waypoint and /obstacle_waypoint below
+        rospy.Subscriber('/traffic_waypoint', Int32, self.traffic_cb)
 
         self.pose = None
         self.waypoints = None
@@ -64,6 +66,7 @@ class WaypointUpdater(object):
 
             self.final_waypoints_pub.publish(lane)
 
+
             rate.sleep()
 
     def pose_cb(self, msg):
@@ -74,6 +77,8 @@ class WaypointUpdater(object):
 
     def traffic_cb(self, msg):
         # TODO: Callback for /traffic_waypoint message. Implement
+        rospy.loginfo('Traffic callback: %s',msg)
+        #print("Traffic callback: ", msg)
         pass
 
     def obstacle_cb(self, msg):

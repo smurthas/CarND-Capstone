@@ -16,4 +16,9 @@ class TLClassifier(object):
 
         """
         #TODO implement light color prediction
-        return TrafficLight.UNKNOWN
+
+        state = 4
+
+        if image.any():
+            state = 0
+        return state
