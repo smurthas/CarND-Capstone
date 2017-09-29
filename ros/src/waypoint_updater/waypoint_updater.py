@@ -64,6 +64,7 @@ class WaypointUpdater(object):
                 i += 1
 
             self.final_waypoints_pub.publish(lane)
+            rospy.loginfo('Waypoints Updated')
 
             rate.sleep()
 
@@ -75,7 +76,7 @@ class WaypointUpdater(object):
 
     def traffic_cb(self, msg):
         # TODO: Callback for /traffic_waypoint message. Implement
-        rospy.loginfo('Traffic callback:: %s',msg)
+        rospy.loginfo('Traffic callback: %s',msg)
         #print("Traffic callback: ", msg)
         pass
 
