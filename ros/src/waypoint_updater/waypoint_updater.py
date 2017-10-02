@@ -47,7 +47,7 @@ class WaypointUpdater(object):
         self.loop()
 
     def update_waypoint_velocity(self, waypoints, waypoint, index):
-        if(waypoint == None or index < 0):
+        if(waypoints == None or waypoint == None or index < 0):
             return
 
         max_vel = 4.47 #m/s
@@ -97,8 +97,9 @@ class WaypointUpdater(object):
             lane = Lane()
             i = next_i
             while len(lane.waypoints) < LOOKAHEAD_WPS:
-                wp = self.waypoints[i % len(self.waypoints)]
-                self.update_waypoint_velocity(self.waypoints, wp, i)
+                index = i % len(self.waypoints)
+                wp = self.waypoints[index]
+                self.update_waypoint_velocity(self.waypoints, wp, index)
                 lane.waypoints.append(wp)
                 i += 1
 
