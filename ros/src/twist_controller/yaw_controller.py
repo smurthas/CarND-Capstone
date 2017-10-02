@@ -24,7 +24,7 @@ class YawController(object):
             max_yaw_rate = abs(self.max_lat_accel / current_velocity);
             cur_ang_velocity = max(-max_yaw_rate, min(max_yaw_rate, cur_ang_velocity))
 
-        if abs(angular_velocity) > 0:
+        if abs(angular_velocity) > 0 and abs(cur_ang_velocity) > 0:
           return self.get_angle(max(current_velocity, self.min_speed) / cur_ang_velocity)
         else:
           return 0.0

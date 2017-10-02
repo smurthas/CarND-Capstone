@@ -38,10 +38,44 @@ class WaypointUpdater(object):
 
         self.pose = None
         self.waypoints = None
+        self.stopping_index = -1
 
         self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
 
         self.loop()
+
+    def update_waypoint_velocity(self, waypoints, waypoint, index):
+        current_vel = self.get_waypoint_velocity(waypoint)
+        max_vel = 8.9 #in m/s?
+        target_vel = max_vel
+
+        #If there is a red light index, calculate target velocity based on distance to stopline.
+        if(self.stopping_index != -1):
+            waypoint_count_until_stop = int(self.stopping_index) - index
+
+            if(waypoint_count_until_stop <= 3):
+                #this acts as a buffer. If you pass the stopline, the red light won't be detected
+                target_vel = 0
+            elif(waypoint_count_until_stop < 60):
+                target_vel =  .15 * waypoint_count_until_stop
+
+        #Compare current velocity to target velocity and adjust accordingly
+        if(current_vel < target_vel):
+            new_vel = current_vel + .15
+        else:
+            new_vel = current_vel - .15
+
+        if(new_vel < 0):
+            new_vel = 0
+        elif(new_vel > max_vel):
+            new_vel = max_vel
+
+        #rospy.loginfo('index: %s, target_vel: %s, new_vel: %s', self.stopping_index, target_vel, new_vel)
+        self.set_waypoint_velocity(waypoints, index, new_vel)
+
+
+
+
 
     def loop(self):
         rate = rospy.Rate(50) # 50Hz
@@ -55,12 +89,15 @@ class WaypointUpdater(object):
 
             prev_i = next_i
 
+
+
             # build a lane object with the next LOOKAHEAD_WPS points, looping
             # around to the beginning of the list if needed
             lane = Lane()
             i = next_i
             while len(lane.waypoints) < LOOKAHEAD_WPS:
                 wp = self.waypoints[i % len(self.waypoints)]
+                self.update_waypoint_velocity(self.waypoints, wp, i)
                 lane.waypoints.append(wp)
                 i += 1
 
@@ -75,9 +112,10 @@ class WaypointUpdater(object):
     def waypoints_cb(self, waypoints):
         self.waypoints = waypoints.waypoints
 
-    def traffic_cb(self, msg):
+    def traffic_cb(self, index):
         # TODO: Callback for /traffic_waypoint message. Implement
-        rospy.loginfo('Traffic callback: %s',msg)
+        #rospy.loginfo('Stopping index: %s',index)
+        self.stopping_index = index.data
         #print("Traffic callback: ", msg)
         pass
 

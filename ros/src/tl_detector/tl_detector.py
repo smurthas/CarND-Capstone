@@ -28,19 +28,6 @@ class TLDetector(object):
         self.lights = []
         self.stopline_wps = []
 
-        sub1 = rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb)
-        sub2 = rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
-
-        '''
-        /vehicle/traffic_lights provides you with the location of the traffic light in 3D map space and
-        helps you acquire an accurate ground truth data source for the traffic light
-        classifier by sending the current color state of all traffic lights in the
-        simulator. When testing on the vehicle, the color state will not be available. You'll need to
-        rely on the position of the light and the camera image to predict it.
-        '''
-        sub3 = rospy.Subscriber('/vehicle/traffic_lights', TrafficLightArray, self.traffic_cb)
-        sub6 = rospy.Subscriber('/image_color', Image, self.image_cb)
-
         config_string = rospy.get_param("/traffic_light_config")
         self.config = yaml.load(config_string)
 
@@ -54,6 +41,21 @@ class TLDetector(object):
         self.last_state = TrafficLight.UNKNOWN
         self.last_wp = -1
         self.state_count = 0
+
+        sub1 = rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb)
+        sub2 = rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
+
+        '''
+        /vehicle/traffic_lights provides you with the location of the traffic light in 3D map space and
+        helps you acquire an accurate ground truth data source for the traffic light
+        classifier by sending the current color state of all traffic lights in the
+        simulator. When testing on the vehicle, the color state will not be available. You'll need to
+        rely on the position of the light and the camera image to predict it.
+        '''
+        sub3 = rospy.Subscriber('/vehicle/traffic_lights', TrafficLightArray, self.traffic_cb)
+        sub6 = rospy.Subscriber('/image_color', Image, self.image_cb)
+
+
 
         rospy.spin()
 
@@ -173,16 +175,40 @@ class TLDetector(object):
             now = rospy.Time.now()
             self.listener.waitForTransform("/base_link",
                   "/world", now, rospy.Duration(1.0))
-            (trans, rot) = self.listener.lookupTransform("/base_link",
+            trans = self.listener.transformPoint("/base_link",
                   "/world", now)
 
         except (tf.Exception, tf.LookupException, tf.ConnectivityException):
             rospy.logerr("Failed to find camera to map transform")
 
-        #TODO Use tranform and rotation to calculate 2D position of light in image
+        if not trans:
+            return (0,0)
 
-        x = 0
-        y = 0
+        trans = trans.point
+
+        print(trans)
+
+        cx = image_width/2
+        cy = image_height/2
+
+        #Camera settings seem to have some focal length issues so workaround.
+        if fx < 10.:
+            fx = 2344.
+            fy = 2552.
+            cy = image_height
+            trans.z -= 1
+
+        cam_matrix = np.array([[fx,  0, cx],
+                               [ 0, fy, cy],
+                               [ 0,  0,  1]])
+        obj_points = np.array([[- trans.y, - trans.z, trans.x]]).astype(np.float32)
+        result, _ = cv2.projectPoints(obj_points, (0,0,0), (0,0,0), cam_matrix, None)
+
+        cx = image_width/2
+        cy = image_height
+
+        x = int(result[0,0,0])
+        y = int(result[0,0,1])
 
         return (x, y)
 
@@ -204,7 +230,12 @@ class TLDetector(object):
         #TODO use light location to zoom in on traffic light in image
 
         #Get classification
-        return self.light_classifier.get_classification(cv_image)
+        state = self.light_classifier.get_classification(cv_image)
+        if state == TrafficLight.UNKNOWN and self.last_state:
+            state = self.last_state
+
+        #rospy.loginfo('state=%f', state)
+        return state
 
     def process_traffic_lights(self):
         """Finds closest visible traffic light, if one exists, and determines its
@@ -238,7 +269,7 @@ class TLDetector(object):
 
             #only run traffic light classifier when the upcoming light is within 100m range
             if closest_dist < 100:
-                state = self.get_light_state(self.lights[closest_stopline])
+                state = self.get_light_state(self.lights)
 
         return closest_stopline_wp, state
 
