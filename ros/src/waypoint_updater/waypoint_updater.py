@@ -60,8 +60,8 @@ class WaypointUpdater(object):
             if(distance_to_stop <= 2):
                 #this acts as a buffer. If you pass the stopline, the red light won't be detected
                 target_vel = 0
-            elif(distance_to_stop < 45):
-                target_vel =  .1 * distance_to_stop
+            elif(distance_to_stop < 30):
+                target_vel =  .15 * distance_to_stop
 
         #Compare current velocity to target velocity and adjust accordingly
         current_vel = self.get_waypoint_velocity(waypoint)
