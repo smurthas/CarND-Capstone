@@ -64,17 +64,18 @@ class WaypointUpdater(object):
                 target_vel =  .15 * distance_to_stop
 
         #target_vel *= 2.23694 #convert from m/s to mph
-        #target_vel *= 3.6 #convert from m/s to kph
+        target_vel *= 3.6 #convert from m/s to kph
 
         #Compare current velocity to target velocity and adjust accordingly
         current_vel = self.get_waypoint_velocity(waypoint)
-        current_vel *= .44704 #mph to m/s
+        #current_vel *= .44704 #mph to m/s
         if(current_vel < target_vel):
-            new_vel = current_vel + .15
+            new_vel = current_vel + .54
         else:
-            new_vel = current_vel - .15
+            new_vel = current_vel - .54
 
-        #max_vel *= 2.23694
+        #max_vel *= 2.23694 #m/s to mph
+        max_vel *= 3.6 #m/s to kph
 
         if(new_vel < 0):
             new_vel = 0
