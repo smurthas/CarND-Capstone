@@ -30,15 +30,18 @@ class WaypointUpdater(object):
     def __init__(self):
         rospy.init_node('waypoint_updater')
 
+        self.pose = None
+        self.waypoints = None
+        self.stopping_index = -1
+        self.max_velocity = rospy.get_param('~velocity')
+        rospy.loginfo('Max Vel: %s', self.max_velocity)
+
         rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb)
         rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
 
         # TODO: Add a subscriber for /traffic_waypoint and /obstacle_waypoint below
         rospy.Subscriber('/traffic_waypoint', Int32, self.traffic_cb)
 
-        self.pose = None
-        self.waypoints = None
-        self.stopping_index = -1
 
         self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
 
@@ -49,7 +52,9 @@ class WaypointUpdater(object):
             return
 
         current_vel = self.get_waypoint_velocity(waypoint)
-        max_vel = 8.9 #in m/s?
+        rospy.loginfo('Current Vel: %s', current_vel)
+
+        max_vel = self.max_velocity
         target_vel = max_vel
 
         #If there is a red light index, calculate target velocity based on distance to stopline.
