@@ -54,7 +54,7 @@ class WaypointUpdater(object):
 
         #If there is a red light index, calculate target velocity based on distance to stopline.
         if(self.stopping_index != -1):
-            distance_to_stop = distance(waypoints, index, self.stopping_index)
+            distance_to_stop = self.distance(waypoints, index, self.stopping_index)
             rospy.loginfo('Distance to stop: %s', distance_to_stop)
             if(distance_to_stop <= 3):
                 #this acts as a buffer. If you pass the stopline, the red light won't be detected
