@@ -50,7 +50,7 @@ class WaypointUpdater(object):
         if(waypoint == None or index < 0):
             return
 
-        max_vel = 8.94 #m/s
+        max_vel = 4.47 #m/s
         target_vel = max_vel
 
         #If there is a red light index, calculate target velocity based on distance to stopline.
@@ -60,22 +60,15 @@ class WaypointUpdater(object):
             if(distance_to_stop <= 2):
                 #this acts as a buffer. If you pass the stopline, the red light won't be detected
                 target_vel = 0
-            elif(distance_to_stop < 60):
-                target_vel =  .15 * distance_to_stop
-
-        target_vel *= 2.23694 #convert from m/s to mph
-        #target_vel *= 3.6 #convert from m/s to kph
+            elif(distance_to_stop < 45):
+                target_vel =  .1 * distance_to_stop
 
         #Compare current velocity to target velocity and adjust accordingly
         current_vel = self.get_waypoint_velocity(waypoint)
-        #current_vel *= .44704 #mph to m/s
         if(current_vel < target_vel):
-            new_vel = current_vel + .34
+            new_vel = current_vel + .25
         else:
-            new_vel = current_vel - .34
-
-        max_vel *= 2.23694 #m/s to mph
-        #max_vel *= 3.6 #m/s to kph
+            new_vel = current_vel - .15
 
         if(new_vel < 0):
             new_vel = 0
