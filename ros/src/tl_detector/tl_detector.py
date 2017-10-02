@@ -41,7 +41,7 @@ class TLDetector(object):
         self.last_state = TrafficLight.UNKNOWN
         self.last_wp = -1
         self.state_count = 0
-        
+
         sub1 = rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb)
         sub2 = rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
 
@@ -234,7 +234,7 @@ class TLDetector(object):
         if state == TrafficLight.UNKNOWN and self.last_state:
             state = self.last_state
 
-        rospy.loginfo('state=%f', state)
+        #rospy.loginfo('state=%f', state)
         return state
 
     def process_traffic_lights(self):

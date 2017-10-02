@@ -77,15 +77,15 @@ class TLClassifier(object):
 
             if int(predictedclass) == 2:
                 state = TrafficLight.YELLOW
-                rospy.loginfo("Yellow Light")
+                #rospy.loginfo("Yellow Light")
                 continue
             elif int(predictedclass) == 1:
                 state = TrafficLight.GREEN
-                rospy.loginfo("Green light")
+                #rospy.loginfo("Green light")
                 continue
             elif int(predictedclass) == 3:
                 state = TrafficLight.RED
-                rospy.loginfo("Red Light")
+                #rospy.loginfo("Red Light")
                 break  # Red has high priority, so, return it if it is seen
             else:
                 continue

@@ -70,7 +70,7 @@ class WaypointUpdater(object):
         elif(new_vel > max_vel):
             new_vel = max_vel
 
-        #rospy.loginfo('target_vel: %s, new_vel: %s', target_vel, new_vel)
+        #rospy.loginfo('index: %s, target_vel: %s, new_vel: %s', self.stopping_index, target_vel, new_vel)
         self.set_waypoint_velocity(waypoints, index, new_vel)
 
 
@@ -114,7 +114,7 @@ class WaypointUpdater(object):
 
     def traffic_cb(self, index):
         # TODO: Callback for /traffic_waypoint message. Implement
-        #rospy.loginfo('Traffic callback: %s',index)
+        rospy.loginfo('Stopping index: %s',index)
         self.stopping_index = index.data
         #print("Traffic callback: ", msg)
         pass
