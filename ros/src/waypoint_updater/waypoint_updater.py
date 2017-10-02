@@ -114,7 +114,7 @@ class WaypointUpdater(object):
 
     def traffic_cb(self, index):
         # TODO: Callback for /traffic_waypoint message. Implement
-        rospy.loginfo('Stopping index: %s',index)
+        #rospy.loginfo('Stopping index: %s',index)
         self.stopping_index = index.data
         #print("Traffic callback: ", msg)
         pass
