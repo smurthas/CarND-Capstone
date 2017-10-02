@@ -23,7 +23,7 @@ as well as to verify your TL classifier.
 TODO (for Yousuf and Aaron): Stopline location for each traffic light.
 '''
 
-LOOKAHEAD_WPS = 20 # Number of waypoints we will publish. You can change this number
+LOOKAHEAD_WPS = 40 # Number of waypoints we will publish. You can change this number
 
 
 class WaypointUpdater(object):
@@ -57,7 +57,7 @@ class WaypointUpdater(object):
         if(self.stopping_index != -1):
             distance_to_stop = self.distance(waypoints, index, self.stopping_index)
             #rospy.loginfo('Distance to stop: %s', distance_to_stop)
-            if(distance_to_stop <= 2):
+            if(distance_to_stop <= 0.5):
                 #this acts as a buffer. If you pass the stopline, the red light won't be detected
                 target_vel = 0
             elif(distance_to_stop < 30):
@@ -82,7 +82,7 @@ class WaypointUpdater(object):
 
 
     def loop(self):
-        rate = rospy.Rate(50) # 50Hz
+        rate = rospy.Rate(20) # 50Hz
         prev_i = 0
         while not rospy.is_shutdown():
             # find the next waypoint from the list
@@ -118,8 +118,9 @@ class WaypointUpdater(object):
 
     def traffic_cb(self, index):
         # TODO: Callback for /traffic_waypoint message. Implement
-        #rospy.loginfo('Stopping index: %s',index)
-        self.stopping_index = index.data
+        if(self.stopping_index != index):
+            rospy.loginfo('Stopping index: %s',index)
+            self.stopping_index = index.data
         #print("Traffic callback: ", msg)
         pass
 
