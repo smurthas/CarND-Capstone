@@ -45,19 +45,22 @@ class WaypointUpdater(object):
         self.loop()
 
     def update_waypoint_velocity(self, waypoints, waypoint, index):
+        if(waypoint == None or index < 0):
+            return
+
         current_vel = self.get_waypoint_velocity(waypoint)
         max_vel = 8.9 #in m/s?
         target_vel = max_vel
 
         #If there is a red light index, calculate target velocity based on distance to stopline.
         if(self.stopping_index != -1):
-            waypoint_count_until_stop = int(self.stopping_index) - index
-
-            if(waypoint_count_until_stop <= 3):
+            distance_to_stop = distance(waypoints, index, self.stopping_index)
+            rospy.loginfo('Distance to stop: %s', distance_to_stop)
+            if(distance_to_stop <= 3):
                 #this acts as a buffer. If you pass the stopline, the red light won't be detected
                 target_vel = 0
-            elif(waypoint_count_until_stop < 60):
-                target_vel =  .15 * waypoint_count_until_stop
+            elif(distance_to_stop < 60):
+                target_vel =  .15 * distance_to_stop
 
         #Compare current velocity to target velocity and adjust accordingly
         if(current_vel < target_vel):
