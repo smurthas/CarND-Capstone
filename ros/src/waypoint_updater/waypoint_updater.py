@@ -63,17 +63,19 @@ class WaypointUpdater(object):
             elif(distance_to_stop < 30):
                 target_vel =  .15 * distance_to_stop
 
+        new_vel = target_vel
+
         #Compare current velocity to target velocity and adjust accordingly
         current_vel = self.get_waypoint_velocity(waypoint)
         if(current_vel < target_vel):
-            new_vel = current_vel + .25
-        else:
-            new_vel = current_vel - .15
+            new_vel = current_vel + .20
+        #else:
+        #    new_vel = current_vel - .15
 
-        if(new_vel < 0):
-            new_vel = 0
-        elif(new_vel > max_vel):
-            new_vel = max_vel
+        #if(new_vel < 0):
+        #    new_vel = 0
+        #elif(new_vel > max_vel):
+        #    new_vel = max_vel
 
         self.set_waypoint_velocity(waypoints, index, new_vel)
 
