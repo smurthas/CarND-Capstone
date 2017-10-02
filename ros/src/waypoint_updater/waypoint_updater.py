@@ -53,7 +53,7 @@ class WaypointUpdater(object):
         current_vel = self.get_waypoint_velocity(waypoint)
         #rospy.loginfo('Current Vel: %s', current_vel)
 
-        max_vel = 8.9 #m/s
+        max_vel = 8.94 #m/s
         target_vel = max_vel
 
         #If there is a red light index, calculate target velocity based on distance to stopline.
@@ -67,12 +67,15 @@ class WaypointUpdater(object):
                 target_vel =  .15 * distance_to_stop
 
         target_vel *= 2.23694 #convert from m/s to mph
+        #target_vel *= 3.6 #convert from m/s to kph
 
         #Compare current velocity to target velocity and adjust accordingly
         if(current_vel < target_vel):
             new_vel = current_vel + .34
         else:
             new_vel = current_vel - .34
+
+        max_vel *= 2.23694
 
         if(new_vel < 0):
             new_vel = 0
