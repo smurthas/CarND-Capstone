@@ -265,7 +265,8 @@ class TLDetector(object):
                     closest_dist = d
                     closest_stopline = i
 
-            closest_stopline_wp = self.stopline_wps[closest_stopline]
+	    if(closest_stopline != -1):
+                closest_stopline_wp = self.stopline_wps[closest_stopline]
 
             #only run traffic light classifier when the upcoming light is within 100m range
             if closest_dist < 100:
