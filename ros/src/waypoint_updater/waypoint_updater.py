@@ -50,17 +50,17 @@ class WaypointUpdater(object):
         if(waypoints == None or waypoint == None or index < 0):
             return
 
-        max_vel = 4.47 #m/s
+        max_vel = 8.94#4.47 #m/s
         target_vel = max_vel
 
         #If there is a red light index, calculate target velocity based on distance to stopline.
         if(self.stopping_index != -1):
             distance_to_stop = self.distance(waypoints, index, self.stopping_index)
             #rospy.loginfo('Distance to stop: %s', distance_to_stop)
-            if(distance_to_stop <= 0.1):
+            if(distance_to_stop <= 2):
                 #this acts as a buffer
                 target_vel = 0
-            elif(distance_to_stop < 10):
+            elif(distance_to_stop < 20):
                 target_vel =  .447 * distance_to_stop
 
         new_vel = target_vel
@@ -116,11 +116,11 @@ class WaypointUpdater(object):
 
     def traffic_cb(self, index):
         # TODO: Callback for /traffic_waypoint message. Implement
-        if(self.stopping_index != index.data):
+        #if(self.stopping_index != index.data):
             #rospy.loginfo('Stopping index: %s',index.data)
-            self.stopping_index = index.data
+        self.stopping_index = index.data
         #print("Traffic callback: ", msg)
-        pass
+        
 
     def obstacle_cb(self, msg):
         # TODO: Callback for /obstacle_waypoint message. We will implement it later

@@ -18,11 +18,12 @@ MAX_DECEL = 1.0
 class WaypointLoader(object):
 
     def __init__(self):
-        rospy.init_node('waypoint_loader', log_level=rospy.DEBUG)
+        rospy.init_node('waypoint_loader')
 
         self.pub = rospy.Publisher('/base_waypoints', Lane, queue_size=1, latch=True)
 
         self.velocity = rospy.get_param('~velocity')
+	#rospy.loginfo('Velocity: %s', self.velocity)
         self.new_waypoint_loader(rospy.get_param('~path'))
         rospy.spin()
 

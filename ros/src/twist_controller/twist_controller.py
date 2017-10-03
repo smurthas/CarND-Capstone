@@ -18,8 +18,8 @@ class Controller(object):
     self.accel_pid_controller = PID(0.11, 0.0, -0.01, -1, 1)
     self.accel_low_pass_filter = LowPassFilter(10, 1)
 
-    self.steer_factor = 2.0
-    full_throttle_velocity = 20
+    self.steer_factor = 1.0
+    full_throttle_velocity = 8.94
     self.throttle_scale = full_throttle_velocity * full_throttle_velocity
 
     # initialize to zero for smooth initial accel from stop
