@@ -33,14 +33,16 @@ class WaypointUpdater(object):
         self.pose = None
         self.waypoints = None
         self.stopping_index = -1
-
+	self.begin_decel_distance = 25.0
+	self.max_vel = 4.47
+	self.decel_rate = self.max_vel / self.begin_decel_distance
 
         rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb)
         rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
 
         # TODO: Add a subscriber for /traffic_waypoint and /obstacle_waypoint below
         rospy.Subscriber('/traffic_waypoint', Int32, self.traffic_cb)
-
+	rospy.Subscriber('/base_velocity', Int32, self.base_velocity_cb)
 
         self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
 
@@ -50,18 +52,18 @@ class WaypointUpdater(object):
         if(waypoints == None or waypoint == None or index < 0):
             return
 
-        max_vel = 8.94#4.47 #m/s
-        target_vel = max_vel
+        
+        target_vel = self.max_vel
 
         #If there is a red light index, calculate target velocity based on distance to stopline.
         if(self.stopping_index != -1):
             distance_to_stop = self.distance(waypoints, index, self.stopping_index)
-            #rospy.loginfo('Distance to stop: %s', distance_to_stop)
+            
             if(distance_to_stop <= 2):
-                #this acts as a buffer
+                
                 target_vel = 0
-            elif(distance_to_stop < 20):
-                target_vel =  .447 * distance_to_stop
+            elif(distance_to_stop < self.begin_decel_distance):
+                target_vel =  self.decel_rate * distance_to_stop
 
         new_vel = target_vel
 
@@ -70,6 +72,7 @@ class WaypointUpdater(object):
 
         if(current_vel < target_vel):
             new_vel = min(target_vel, current_vel + 1.0)
+	
 
 
         self.set_waypoint_velocity(waypoints, index, new_vel)
@@ -107,6 +110,11 @@ class WaypointUpdater(object):
 
 
             rate.sleep()
+
+    def base_velocity_cb(self, msg):
+        self.max_vel = msg.data
+	self.decel_rate = self.max_vel / self.begin_decel_distance
+	rospy.loginfo('Vel: %s, Decel: %s', self.max_vel, self.decel_rate)
 
     def pose_cb(self, msg):
         self.pose = msg.pose

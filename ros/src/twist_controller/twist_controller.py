@@ -19,12 +19,15 @@ class Controller(object):
     self.accel_low_pass_filter = LowPassFilter(10, 1)
 
     self.steer_factor = 1.0
-    full_throttle_velocity = 8.94
-    self.throttle_scale = full_throttle_velocity * full_throttle_velocity
+    self.max_vel = 4.47
+    self.throttle_scale = self.max_vel * self.max_vel
 
     # initialize to zero for smooth initial accel from stop
     self.accel_low_pass_filter.filt(0)
 
+  def set_max_vel(self, max_vel):
+    self.max_vel = max_vel
+    self.throttle_scale = max_vel * max_vel
 
   def get_accel(self, prop_lin_vel, cur_lin_vel, time):
     throttle = 0

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import rospy
-from std_msgs.msg import Bool
+from std_msgs.msg import Bool, Int32
 from dbw_mkz_msgs.msg import ThrottleCmd, SteeringCmd, BrakeCmd, SteeringReport
 from geometry_msgs.msg import TwistStamped, PoseStamped
 import math
@@ -69,8 +69,12 @@ class DBWNode(object):
     rospy.Subscriber('/current_velocity', TwistStamped, self.vel_cb)
     rospy.Subscriber('/twist_cmd', TwistStamped, self.twist_cb)
     rospy.Subscriber('/vehicle/dbw_enabled', Bool, self.dbw_status_cb)
+    rospy.Subscriber('/base_velocity', Int32, self.base_velocity_cb)
 
     self.loop()
+
+  def base_velocity_cb(self, msg):
+    self.controller.set_max_vel(msg.data)
 
   def vel_cb(self, msg):
     self.twist = msg.twist
