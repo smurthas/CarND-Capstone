@@ -3,6 +3,7 @@
 import rospy
 from geometry_msgs.msg import PoseStamped
 from styx_msgs.msg import Lane, Waypoint
+from std_msgs.msg import Int32
 import tf
 
 import math
@@ -22,24 +23,63 @@ as well as to verify your TL classifier.
 TODO (for Yousuf and Aaron): Stopline location for each traffic light.
 '''
 
-LOOKAHEAD_WPS = 20 # Number of waypoints we will publish. You can change this number
+LOOKAHEAD_WPS = 40 # Number of waypoints we will publish. You can change this number
 
 
 class WaypointUpdater(object):
     def __init__(self):
         rospy.init_node('waypoint_updater')
 
+        self.pose = None
+        self.waypoints = None
+        self.stopping_index = -1
+	self.begin_decel_distance = 25.0
+	self.max_vel = 4.47
+	self.decel_rate = self.max_vel / self.begin_decel_distance
+
         rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb)
         rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
 
         # TODO: Add a subscriber for /traffic_waypoint and /obstacle_waypoint below
-
-        self.pose = None
-        self.waypoints = None
+        rospy.Subscriber('/traffic_waypoint', Int32, self.traffic_cb)
+	rospy.Subscriber('/base_velocity', Int32, self.base_velocity_cb)
 
         self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
 
         self.loop()
+
+    def update_waypoint_velocity(self, waypoints, waypoint, index):
+        if(waypoints == None or waypoint == None or index < 0):
+            return
+
+        
+        target_vel = self.max_vel
+
+        #If there is a red light index, calculate target velocity based on distance to stopline.
+        if(self.stopping_index != -1):
+            distance_to_stop = self.distance(waypoints, index, self.stopping_index)
+            
+            if(distance_to_stop <= 2):
+                
+                target_vel = 0
+            elif(distance_to_stop < self.begin_decel_distance):
+                target_vel =  self.decel_rate * distance_to_stop
+
+        new_vel = target_vel
+
+        #Compare current velocity to target velocity and adjust accordingly
+        current_vel = self.get_waypoint_velocity(waypoint)
+
+        if(current_vel < target_vel):
+            new_vel = min(target_vel, current_vel + 1.0)
+	
+
+
+        self.set_waypoint_velocity(waypoints, index, new_vel)
+
+
+
+
 
     def loop(self):
         rate = rospy.Rate(50) # 50Hz
@@ -53,18 +93,28 @@ class WaypointUpdater(object):
 
             prev_i = next_i
 
+
+
             # build a lane object with the next LOOKAHEAD_WPS points, looping
             # around to the beginning of the list if needed
             lane = Lane()
             i = next_i
             while len(lane.waypoints) < LOOKAHEAD_WPS:
-                wp = self.waypoints[i % len(self.waypoints)]
+                index = i % len(self.waypoints)
+                wp = self.waypoints[index]
+                self.update_waypoint_velocity(self.waypoints, wp, index)
                 lane.waypoints.append(wp)
                 i += 1
 
             self.final_waypoints_pub.publish(lane)
 
+
             rate.sleep()
+
+    def base_velocity_cb(self, msg):
+        self.max_vel = msg.data
+	self.decel_rate = self.max_vel / self.begin_decel_distance
+	#rospy.loginfo('Vel: %s, Decel: %s', self.max_vel, self.decel_rate)
 
     def pose_cb(self, msg):
         self.pose = msg.pose
@@ -72,9 +122,13 @@ class WaypointUpdater(object):
     def waypoints_cb(self, waypoints):
         self.waypoints = waypoints.waypoints
 
-    def traffic_cb(self, msg):
+    def traffic_cb(self, index):
         # TODO: Callback for /traffic_waypoint message. Implement
-        pass
+        #if(self.stopping_index != index.data):
+            #rospy.loginfo('Stopping index: %s',index.data)
+        self.stopping_index = index.data
+        #print("Traffic callback: ", msg)
+        
 
     def obstacle_cb(self, msg):
         # TODO: Callback for /obstacle_waypoint message. We will implement it later
