@@ -114,7 +114,7 @@ class WaypointUpdater(object):
     def base_velocity_cb(self, msg):
         self.max_vel = msg.data
 	self.decel_rate = self.max_vel / self.begin_decel_distance
-	rospy.loginfo('Vel: %s, Decel: %s', self.max_vel, self.decel_rate)
+	#rospy.loginfo('Vel: %s, Decel: %s', self.max_vel, self.decel_rate)
 
     def pose_cb(self, msg):
         self.pose = msg.pose
